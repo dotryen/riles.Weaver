@@ -1,0 +1,15 @@
+{
+  "name": "com.riles.weaver",
+  "version": "1.2.3",
+  "displayName": "riles.Weaver",
+  "description": "Post-compile weaver, great for automation and tedious post processing.",
+  "unity": "2019.4",
+  "keywords": [
+    "shared"
+  ],
+  "author": {
+    "name": "riles",
+    "email": "paperclip.riles@gmail.com"
+  },
+  "type": "library"
+}
