@@ -1,6 +1,6 @@
 {
   "name": "com.riles.weaver",
-  "version": "1.2.3",
+  "version": "1.0.0",
   "displayName": "riles.Weaver",
   "description": "Post-compile weaver, great for automation and tedious post processing.",
   "unity": "2019.4",
