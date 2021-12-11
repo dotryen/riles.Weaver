@@ -5,6 +5,7 @@ using System.Reflection;
 using System.IO;
 using System.Linq;
 using Mono.Cecil;
+using UnityEditor;
 using UnityEditor.Compilation;
 using UAssembly = UnityEditor.Compilation.Assembly;
 using SysAssembly = System.Reflection.Assembly;
@@ -19,7 +20,7 @@ namespace riles.Weaver {
         /// <returns>Assemblies compiled by Unity.</returns>
         public static UAssembly[] GetAssemblies(Platform platform) {
             var assemblies = CompilationPipeline.GetAssemblies();
-            return assemblies.Where(x => x.flags == (AssemblyFlags)platform).ToArray();
+            return assemblies.Where(x => x.flags == (AssemblyFlags)platform && !x.name.StartsWith(AssemblyInfo.ASSEMBLY_NAME)).ToArray();
         }
 
         public static UAssembly GetAssemblyByName(string name) {
@@ -75,6 +76,14 @@ namespace riles.Weaver {
             }
 
             return depend;
+        }
+
+        public static void ReloadAssemblies() {
+#if UNITY_2019_3_OR_NEWER
+            EditorUtility.RequestScriptReload();
+#else
+            UnityEditorInternal.InternalEditorUtility.RequestScriptReload();
+#endif
         }
     }
 }

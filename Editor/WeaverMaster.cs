@@ -47,11 +47,11 @@ namespace riles.Weaver {
             }
         }
 
-        internal static bool Weave(string assembly, string[] depend, bool isEditor) {
-            if (Path.GetFileNameWithoutExtension(assembly).StartsWith("Unity")) return true;
+        internal static void Weave(string assembly, string[] depend, bool isEditor) {
+            if (Path.GetFileNameWithoutExtension(assembly).StartsWith("Unity")) return;
 
             GetDefinition(assembly, depend, out var definition, out var resolver);
-            if (HasGeneratedClass(definition.MainModule)) return true;
+            if (HasGeneratedClass(definition.MainModule)) return;
 
             // work
             bool status = true;
@@ -79,7 +79,7 @@ namespace riles.Weaver {
             definition.Dispose();
             resolver.Dispose();
 
-            return status;
+            WeaverStatus.WeaveFailed = !status;
         }
 
         internal static void End() {

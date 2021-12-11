@@ -7,17 +7,13 @@ namespace riles.Weaver {
     public static class WeaverStatus {
         #region Constants
 
-        internal const string WEAVER_BUTTON_PREFIX = "rilesUtil/Weaver/";
-        internal const string PAUSE_BUTTON = WEAVER_BUTTON_PREFIX + "Pause Weaver";
-        internal const string FORCE_WEAVE = WEAVER_BUTTON_PREFIX + "Weave";
-        internal const string STOP_LOG = WEAVER_BUTTON_PREFIX + "Hide Logs";
-
-        internal const string WEAVER_READY = "BASIC_WEAVER_READY";
-        internal const string WEAVER_PAUSE = "BASIC_WEAVER_PAUSE";
-        internal const string WEAVER_TRY = "BASIC_WEAVER_TRY";
-        internal const string WEAVER_FAILED = "BASIC_WEAVER_FAIL";
-        internal const string WEAVER_STARTUP = "BASIC_WEAVER_START";
-        internal const string COMP_FAILED = "BASIC_COMP_FAILED";
+        internal const string WEAVER_READY = "WEAVER_READY";
+        internal const string WEAVER_PAUSE = "WEAVER_PAUSE";
+        internal const string WEAVER_TRY = "WEAVER_TRY";
+        internal const string WEAVER_FAILED = "WEAVER_FAIL";
+        internal const string WEAVER_STARTUP = "WEAVER_START";
+        internal const string COMP_FAILED = "WEAVER_COMP_FAILED";
+        internal const string LOG_PAUSED = "WEAVER_LOG_PAUSED";
 
         #endregion
 
@@ -82,6 +78,15 @@ namespace riles.Weaver {
             }
         }
 
+        public static bool LoggingPaused {
+            get {
+                return EditorPrefs.GetBool(LOG_PAUSED, false);
+            }
+            internal set {
+                EditorPrefs.SetBool(LOG_PAUSED, value);
+            }
+        }
+
         internal static void Initialize() {
             if (Ready) return;
 
@@ -90,39 +95,9 @@ namespace riles.Weaver {
             WeaveFailed = false;
             StartupWeave = false;
             CompilationFailed = false;
+            // LoggingPaused = false;
+
             Ready = true;
-        }
-
-        [MenuItem(PAUSE_BUTTON)]
-        static void PauseButton() {
-            if (!Paused) {
-                if (!EditorUtility.DisplayDialog("Are you sure?", "Pausing will prevent you from entering Play Mode.", "Don't Pause", "Pause")) {
-                    Paused = true;
-                }
-            } else {
-                Paused = false;
-
-                if (TriedWeave) {
-                    WeaverHook.WeaveExistingAssemblies();
-                    TriedWeave = false;
-                }
-            }
-        }
-
-        [MenuItem(PAUSE_BUTTON, true)]
-        static bool PauseValidate() {
-            Menu.SetChecked(PAUSE_BUTTON, Paused);
-            return true;
-        }
-
-        // [MenuItem(STOP_LOG)]
-        // static void StopLogButton() {
-        // 
-        // }
-
-        [MenuItem(FORCE_WEAVE)]
-        static void DoWeave() {
-            WeaverHook.WeaveExistingAssemblies();
         }
     }
 }

@@ -30,30 +30,17 @@ namespace riles.Weaver {
         }
 
         private static void OnAssemblyCompileFinish(string assembly, CompilerMessage[] messages) {
-            WeaverStatus.CompilationFailed = WeaverStatus.CompilationFailed && messages.Any(x => x.type == CompilerMessageType.Error);
+            WeaverStatus.CompilationFailed = WeaverStatus.CompilationFailed || messages.Any(x => x.type == CompilerMessageType.Error);
         }
 
         private static void OnCompileFinish(object obj) {
             if (WeaverStatus.CompilationFailed) return;
-
             if (WeaverStatus.Paused) {
                 WeaverStatus.TriedWeave = true;
                 return;
             }
 
-            WeaverMaster.Start();
-
-            foreach (var assem in CompilationPipeline.GetAssemblies()) {
-                if (WeaverStatus.WeaveFailed) break;
-                if (assem.name == Globals.ASSEMBLY_NAME) continue; // Do not weave weaver assembly
-
-                WeaveAssembly(assem.outputPath);
-            }
-
-            WeaverMaster.End();
-            ReloadAssemblies();
-            if (!WeaverStatus.WeaveFailed) WeaverLog.Log("Successfully weaved through assemblies!");
-            else WeaverLog.LogWarning("Weave failed.");
+            WeaveAll();
         }
 
         public static void WeaveExistingAssemblies() {
@@ -62,40 +49,49 @@ namespace riles.Weaver {
             }
 
             OnCompileStart(null);
+            WeaveAll();
+        }
+
+        internal static void WeaveAll() {
             WeaverMaster.Start();
 
-            foreach (var assem in CompilationPipeline.GetAssemblies()) {
-                if (WeaverStatus.WeaveFailed) {
-                    break;
-                    // add log
-                }
-                if (assem.name == Globals.ASSEMBLY_NAME) continue; // Do not weave weaver assembly
+            {
+                Assembly[] assemblies = AsmUtil.GetUserAssemblies(Platform.Player);
 
-                WeaveAssembly(assem.outputPath);
+                for (int i = 0; i < assemblies.Length; i++) {
+                    if (WeaverStatus.WeaveFailed) break;
+                    EditorUtility.DisplayProgressBar("Weaver Status (Player pass)", $"Weaving {assemblies[i].name}...", (float)i / assemblies.Length);
+                    WeaveAssembly(assemblies[i].outputPath, false);
+                }
+            }
+
+            {
+                Assembly[] assemblies = AsmUtil.GetUserAssemblies(Platform.Editor);
+
+                for (int i = 0; i < assemblies.Length; i++) {
+                    if (WeaverStatus.WeaveFailed) break;
+                    EditorUtility.DisplayProgressBar("Weaver Status (Editor pass)", $"Weaving {assemblies[i].name}...", (float)i / assemblies.Length);
+                    WeaveAssembly(assemblies[i].outputPath, true);
+                }
             }
 
             WeaverMaster.End();
-            ReloadAssemblies();
+            EditorUtility.ClearProgressBar();
+
+            AsmUtil.ReloadAssemblies();
+
+            if (!WeaverStatus.WeaveFailed) WeaverLog.Log("Successfully weaved through assemblies!");
+            else WeaverLog.LogWarning("Weave failed.");
         }
 
-        internal static void WeaveAssembly(string assemblyPath) {
+        internal static void WeaveAssembly(string assemblyPath, bool isEditor) {
             if (!File.Exists(assemblyPath)) return;
 
             var name = Path.GetFileNameWithoutExtension(assemblyPath);
             if (!AsmUtil.IsUserAssembly(name)) return;
 
-            bool isEditor = assemblyPath.Contains(".Editor") || assemblyPath.Contains("-Editor");
             HashSet<string> depend = AsmUtil.GetDependencies(assemblyPath);
-
-            WeaverStatus.WeaveFailed = !WeaverMaster.Weave(assemblyPath, depend.ToArray(), isEditor);
-        }
-
-        internal static void ReloadAssemblies() {
-#if UNITY_2019_3_OR_NEWER
-            EditorUtility.RequestScriptReload();
-#else
-            UnityEditorInternal.InternalEditorUtility.RequestScriptReload();
-#endif
+            WeaverMaster.Weave(assemblyPath, depend.ToArray(), isEditor);
         }
     }
 }

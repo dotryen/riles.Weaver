@@ -16,8 +16,13 @@ namespace riles.Weaver {
                     WeaverHook.WeaveExistingAssemblies();
 
                     if (WeaverStatus.WeaveFailed) {
-                        WeaverLog.LogWarning("Attempts at weaving have failed. Cannot enter play mode until issues are resolved.");
                         EditorApplication.isPlaying = false;
+
+                        WeaverLog.LogError("Attempts at weaving have failed. Cannot enter play mode until issues are resolved.");
+
+                        foreach (SceneView view in SceneView.sceneViews) {
+                            view.ShowNotification(new GUIContent("All weaver errors must be fixed before playing!"));
+                        }
                     }
                 }
             }
