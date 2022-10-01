@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Mono.Cecil;
+using riles.Cecil;
 using UnityEngine;
 using UnityEditor;
 using UAssembly = UnityEditor.Compilation.Assembly;
-using TypeAttributes = Mono.Cecil.TypeAttributes;
+using TypeAttributes = riles.Cecil.TypeAttributes;
 
 namespace riles.Weaver {
     internal static class WeaverMaster {
@@ -27,9 +27,10 @@ namespace riles.Weaver {
 
         internal static void Start() {
             foreach (var asm in AsmUtil.GetUserAssemblies(Platform.Editor)) {
-                if (!File.Exists(asm.outputPath)) continue;
+                string path = asm.outputPath.Replace("PlayerScriptAssemblies", "ScriptAssemblies");
+                if (!File.Exists(path)) continue;
 
-                GetDefinition(asm.outputPath, AsmUtil.GetDependencies(asm.outputPath).ToArray(), out var def, out var resolver);
+                GetDefinition(path, AsmUtil.GetDependencies(asm.outputPath).ToArray(), out var def, out var resolver);
                 var weaverRefs = def.MainModule.Types.Where(x => x.Inherits<Weaver>());
 
                 if (weaverRefs.Count() > 0) {

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Mono.Cecil;
+using riles.Cecil;
 
 namespace riles.Weaver {
     public class TypeReferenceComparer : IEqualityComparer<TypeReference> {

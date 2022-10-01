@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using Mono.Cecil;
+using riles.Cecil;
+using riles.Cecil.Cil;
 
 namespace riles.Weaver {
     public static class CecilExtensions {
@@ -134,11 +135,33 @@ namespace riles.Weaver {
         /// Prevents an error when resolving from the same module.
         /// </summary>
         public static TypeDefinition SafeResolve(this TypeReference tr, ModuleDefinition module) {
-            var result = module.Types.FirstOrDefault(x => x.Name == tr.Name);
-            if (result == null) {
+            TypeDefinition definition = null;
+            bool end = false;
+
+            foreach (var type in module.Types) {
+                if (tr.FullName == type.FullName) {
+                    definition = type;
+                    end = true;
+                } else {
+                    // check nested types
+                    if (type.HasNestedTypes) {
+                        foreach (var nested in type.NestedTypes) {
+                            if (tr.FullName == nested.FullName) {
+                                definition = nested;
+                                end = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (end) break;
+            }
+
+            if (definition == null) {
                 return tr.Resolve();
             } else {
-                return result;
+                return definition;
             }
         }
 
@@ -152,5 +175,9 @@ namespace riles.Weaver {
 
             return instance;
         }
+
+        // public static void RemoveAt(this ILProcessor processor, int index) {
+        //     processor.Remove(processor.Body.Instructions[index]);
+        // }
     }
 }
